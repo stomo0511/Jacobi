@@ -25,16 +25,6 @@ using namespace std;
 //	a[3 + 0*n] = 1.0; a[3 + 1*n] = 4.0; a[3 + 2*n] = 10.0; a[3 + 3*n] = 20.0;
 //}
 
-void Gen_mat(const int n, double *a)
-{
-	srand(20190611);
-
-//	#pragma omp parallel for
-	for (int i=0; i<n; i++)
-		for (int j=0; j<n; j++)
-			a[i + j*n] = (double)rand() / RAND_MAX;
-}
-
 void Gen_symmat(const int n, double *a)
 {
 	srand(20190611);
@@ -45,13 +35,32 @@ void Gen_symmat(const int n, double *a)
 			a[i + j*n] = a[j + i*n] = (double)rand() / RAND_MAX;
 }
 
-void Copy_mat(const int n, double *a, double *b)
+void Gen_mat(const int n, double *a)
+{
+	srand(20190611);
+
+//	#pragma omp parallel for
+	for (int i=0; i<n; i++)
+		for (int j=0; j<n; j++)
+			a[i + j*n] = (double)rand() / RAND_MAX;
+}
+
+void Copy_symmat(const int n, double *a, double *b)
 {
 //	#pragma omp parallel for
 	#pragma omp for
 	for (int i=0; i<n; i++)
 		for (int j=0; j<=i; j++)
 			b[i + j*n] = b[j + i*n] = a[i + j*n];
+}
+
+void Copy_mat(const int n, double *a, double *b)
+{
+//	#pragma omp parallel for
+	#pragma omp for
+	for (int i=0; i<n; i++)
+		for (int j=0; j<n; j++)
+			b[i + j*n] = a[i + j*n];
 }
 
 void Set_Iden(const int n, double *a)

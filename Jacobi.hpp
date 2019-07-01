@@ -13,6 +13,7 @@
 
 void Gen_symmat(const int n, double *a);
 void Gen_mat(const int n, double *a);
+void Copy_symmat(const int n, double *a, double *b);
 void Copy_mat(const int n, double *a, double *b);
 void Set_Iden(const int n, double *a);
 double Off_d(const int n, double *a);

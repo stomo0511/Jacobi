@@ -14,30 +14,17 @@
 
 using namespace std;
 
-void printAtA(const int n, double* a)
+// update two vectors
+void Update(const int n, double* a, const int p, const int q, const double c, const double s)
 {
 	double tmp;
 
-	for (int i=0; i<n; i++) {
-		for (int j=0; j<n; j++) {
-			tmp = 0.0;
-			for (int k=0; k<n; k++)
-				tmp += a[k + i*n]*a[k + j*n];
-			cout << tmp << ", ";
-		}
-		cout << endl;
+	for (int k=0; k<n; k++)
+	{
+		tmp = a[k + p*n];
+		a[k + p*n] =  c*tmp + s*a[k + q*n];
+		a[k + q*n] = -s*tmp + c*a[k + q*n];
 	}
-	cout << endl;
-}
-
-void printA(const int n, double* a)
-{
-	for (int i=0; i<n; i++) {
-		for (int j=0; j<n; j++)
-			cout << a[i + j*n] << ", ";
-		cout << endl;
-	}
-	cout << endl;
 }
 
 int main(int argc, char **argv)
@@ -48,32 +35,29 @@ int main(int argc, char **argv)
 	const int n = atoi(argv[1]);
 	assert(n%2==0);
 
-	double *a = new double[n*n];
+	double *a = new double[n*n];   // Original matrix
+	double *oa = new double[n*n];  // Copy of original matrix
+	double *v = new double[n*n];   // Right-singular vector matrix
+	int *top = new int[n/2];
+	int *bot = new int[n/2];
 
 	// Generate matrix
 	Gen_mat(n,a);
 
-	// Singular vector matrix
-	double *v = new double[n*n];
-
 	#pragma omp parallel
-	Set_Iden(n,v);
-
-	int *top = new int[n/2];
-	int *bot = new int[n/2];
-
-	#pragma omp parallel for
-	for (int i=0;i<n/2;i++)
 	{
-		top[i] = i*2;
-		bot[i] = i*2+1;
+		Copy_mat(n,a,oa);
+		Set_Iden(n,v);
+
+		#pragma omp parallel for
+		for (int i=0;i<n/2;i++)
+		{
+			top[i] = i*2;
+			bot[i] = i*2+1;
+		}
 	}
 
-	// Print a
-//	printAtA(n,a);
-
 	int step = 0;
-
 	double time = omp_get_wtime();
 
 	double maxt = 1.0;  // convergence criterion
@@ -87,20 +71,17 @@ int main(int argc, char **argv)
 			{
 				int i = (top[l] > bot[l]) ? top[l] : bot[l];
 				int j = (top[l] < bot[l]) ? top[l] : bot[l];
-//				cout << "(i,j) = (" << i << ", " << j << ")\n";
 
 				double x = cblas_ddot(n,a+i*n,1,a+i*n,1);  // x = a_i^T a_i
 				double y = cblas_ddot(n,a+j*n,1,a+j*n,1);  // y = a_j^T a_j
 				double z = cblas_ddot(n,a+i*n,1,a+j*n,1);  // z = a_i^T a_j
 
-//				cout << "x = " << x << ", y = " << y << ", z = " << z << endl;
 				double t = fabs(z) / sqrt(x*y);
-
 				maxt = maxt > t ? maxt : t;
 
 				if (t > EPS)
 				{
-					// compute rotation
+					// compute Givens rotation
 					double zeta = (x - y) / (2.0*z);
 					double tau;
 					if (zeta >= 0.0)
@@ -111,40 +92,55 @@ int main(int argc, char **argv)
 					double c = 1.0 / sqrt(1 + tau*tau);
 					double s = c*tau;
 
-					double tmp;
-
 					// update A
-					for (int k=0; k<n; k++)
-					{
-						tmp = a[k + i*n];
-						a[k + i*n] =  c*tmp + s*a[k + j*n];
-						a[k + j*n] = -s*tmp + c*a[k + j*n];
-					}
+					Update(n,a,i,j,c,s);
 
 					// update V
-					for (int k=0; k<n; k++)
-					{
-						tmp = v[k + i*n];
-						v[k + i*n] =  c*tmp + s*v[k + j*n];
-						v[k + j*n] = -s*tmp + c*v[k + j*n];
-					}
+					Update(n,v,i,j,c,s);
 				}
 				step++;
-				// Print a
-//				printAtA(n,a);
-			}
+			} // End of l-loop
 			music(n,top,bot);
-		}
-//		cout << "maxt = " << maxt << endl;
-	}
+		} // End of p-loop
+	} // End of while-loop
 
 	time = omp_get_wtime() - time;
 
+//	// sigma_i = || G(:,i) ||_2
+//	double *s = new double[n];
+//
+//	#pragma omp parallel for
+//	for (int i=0; i<n; i++)
+//		s[i] = sqrt(cblas_ddot(n,a+i*n,1,a+i*n,1));
+//
+//	// Left-singular vector matrix
+//	double *u = new double[n*n];
+//
+//	#pragma omp parallel
+//	{
+//		Copy_mat(n,a,u);
+//
+//		#pragma omp for
+//		for (int i=0; i<n; i++)
+//			cblas_dscal(n,1.0/s[i],u+i*n,1);
+//	}
+
+	cblas_dgemm(CblasColMajor,CblasNoTrans,CblasTrans,n,n,n,-1.0,a,n,v,n,1.0,oa,n);
+	double tmp = 0.0;
+	#pragma omp parallel for reduction(+:tmp)
+	for (int i=0; i<n*n; i++)
+		tmp += oa[i]*oa[i];
+
 	cout << "n = " << n << ", time = " << time << endl;
-	cout << "k = " << step << endl;
+	cout << "k = " << step << ", ||A - U Sigma V^T|| = " << sqrt(tmp) << endl;
 
 	delete [] a;
+	delete [] oa;
 	delete [] v;
+//	delete [] s;
+//	delete [] u;
+	delete [] top;
+	delete [] bot;
 
 	return EXIT_SUCCESS;
 }

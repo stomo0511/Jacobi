@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	Gen_symmat(n,a);
 
 	double *oa = new double[n*n];
-	Copy_mat(n,a,oa);
+	Copy_symmat(n,a,oa);
 
 	// Eigenvector matrix
 	Set_Iden(n,v);
