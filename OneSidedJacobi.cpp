@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 		Copy_mat(n,a,oa);
 		Set_Iden(n,v);
 
-		#pragma omp parallel for
+		#pragma omp for
 		for (int i=0;i<n/2;i++)
 		{
 			top[i] = i*2;
@@ -57,27 +57,27 @@ int main(int argc, char **argv)
 		}
 	}
 
-	int step = 0;
+	int k = 0;
 	double time = omp_get_wtime();
 
 	double maxt = 1.0;  // convergence criterion
 	while (maxt > EPS)
 	{
 		maxt = 0.0;
-		for (int p=0; p<n-1; p++)
+		for (int j=0; j<n-1; j++)
 		{
-			#pragma omp parallel for reduction (max:maxt)
-			for (int l=0; l<n/2; l++)
+			#pragma omp parallel for reduction(+:k)
+			for (int i=0; i<n/2; i++)
 			{
-				int i = (top[l] > bot[l]) ? top[l] : bot[l];
-				int j = (top[l] < bot[l]) ? top[l] : bot[l];
+				int p = (top[i] > bot[i]) ? top[i] : bot[i];
+				int q = (top[i] < bot[i]) ? top[i] : bot[i];
 
-				double x = cblas_ddot(n,a+i*n,1,a+i*n,1);  // x = a_i^T a_i
-				double y = cblas_ddot(n,a+j*n,1,a+j*n,1);  // y = a_j^T a_j
-				double z = cblas_ddot(n,a+i*n,1,a+j*n,1);  // z = a_i^T a_j
+				double x = cblas_ddot(n,a+p*n,1,a+p*n,1);  // x = a_p^T a_p
+				double y = cblas_ddot(n,a+q*n,1,a+q*n,1);  // y = a_q^T a_q
+				double z = cblas_ddot(n,a+p*n,1,a+q*n,1);  // z = a_p^T a_q
 
 				double t = fabs(z) / sqrt(x*y);
-				maxt = maxt > t ? maxt : t;
+				maxt = maxt > t ? maxt : t;      // *** <- この部分大丈夫化か？ ***
 
 				if (t > EPS)
 				{
@@ -93,12 +93,12 @@ int main(int argc, char **argv)
 					double s = c*tau;
 
 					// update A
-					Update(n,a,i,j,c,s);
+					Update(n,a,p,q,c,s);
 
 					// update V
-					Update(n,v,i,j,c,s);
+					Update(n,v,p,q,c,s);
 				}
-				step++;
+				k++;
 			} // End of l-loop
 			music(n,top,bot);
 		} // End of p-loop
@@ -132,15 +132,15 @@ int main(int argc, char **argv)
 		tmp += oa[i]*oa[i];
 
 	cout << "n = " << n << ", time = " << time << endl;
-	cout << "k = " << step << ", ||A - U Sigma V^T|| = " << sqrt(tmp) << endl;
+	cout << "k = " << k << ", ||A - U Sigma V^T|| = " << sqrt(tmp) << endl;
 
 	delete [] a;
 	delete [] oa;
 	delete [] v;
-//	delete [] s;
-//	delete [] u;
 	delete [] top;
 	delete [] bot;
+//	delete [] s;
+//	delete [] u;
 
 	return EXIT_SUCCESS;
 }
