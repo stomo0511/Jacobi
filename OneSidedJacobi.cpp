@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 {
 	assert(argc > 1);
 
-	// Matrix size
+	// Matrix size: n x n
 	const int n = atoi(argv[1]);
 	assert(n%2==0);
 
