@@ -31,6 +31,16 @@ void Gen_mat(const int n, double *a)
 
 //	#pragma omp parallel for
 	for (int i=0; i<n; i++)
+		for (int j=0; j<n; j++)
+			a[i + j*n] = (double)rand() / RAND_MAX;
+}
+
+void Gen_symmat(const int n, double *a)
+{
+	srand(20190611);
+
+//	#pragma omp parallel for
+	for (int i=0; i<n; i++)
 		for (int j=0; j<=i; j++)
 			a[i + j*n] = a[j + i*n] = (double)rand() / RAND_MAX;
 }

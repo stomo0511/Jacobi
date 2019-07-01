@@ -11,6 +11,7 @@
 // Convergence criterion
 #define EPS 1.0E-12
 
+void Gen_symmat(const int n, double *a);
 void Gen_mat(const int n, double *a);
 void Copy_mat(const int n, double *a, double *b);
 void Set_Iden(const int n, double *a);

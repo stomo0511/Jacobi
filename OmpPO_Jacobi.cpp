@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	double *a = new double[n*n];
 
 	// Generate matrix
-	Gen_mat(n,a);
+	Gen_symmat(n,a);
 
 	// debug matrix
 	double *oa = new double[n*n];
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 
 	time = omp_get_wtime() - time;
 
-	cout << "\nn = " << n << ", time = " << time << endl;
+	cout << "n = " << n << ", time = " << time << endl;
 	cout << "k = " << k << ", Off(A) = " << Off_d(n,a) << endl;
 
 //	cout << "\nA = \n";

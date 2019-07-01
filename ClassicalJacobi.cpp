@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	double *v = new double[n*n];
 
 	// Generate matrix
-	Gen_mat(n,a);
+	Gen_symmat(n,a);
 
 	double *oa = new double[n*n];
 	Copy_mat(n,a,oa);
