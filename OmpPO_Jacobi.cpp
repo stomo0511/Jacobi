@@ -22,13 +22,13 @@ int main(int argc, char **argv)
 	double *a = new double[n*n];
 
 	// Generate matrix
-	Gen_mat(n,a);
+	Gen_symmat(n,a);
 
 	// debug matrix
 	double *oa = new double[n*n];
 
 	#pragma omp parallel
-	Copy_mat(n,a,oa);
+	Copy_symmat(n,a,oa);
 
 	// Eigenvector matrix
 	double *v = new double[n*n];
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	double *b = new double[n*n];
 
 	#pragma omp parallel
-	Copy_mat(n,a,b);
+	Copy_symmat(n,a,b);
 
 	int *top = new int[n/2];
 	int *bot = new int[n/2];
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 					GivensR(n,v,p,q,c,s);
 				}
 				// copy a <- b
-				Copy_mat(n,b,a);
+				Copy_symmat(n,b,a);
 			}
 			music(n,top,bot);
 		}
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 
 	time = omp_get_wtime() - time;
 
-	cout << "\nn = " << n << ", time = " << time << endl;
+	cout << "n = " << n << ", time = " << time << endl;
 	cout << "k = " << k << ", Off(A) = " << Off_d(n,a) << endl;
 
 //	cout << "\nA = \n";
