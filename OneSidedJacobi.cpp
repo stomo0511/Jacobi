@@ -7,9 +7,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-
 #include <mkl_cblas.h>
-
 #include "Jacobi.hpp"
 
 using namespace std;
