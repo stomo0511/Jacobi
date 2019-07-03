@@ -20,8 +20,8 @@ void Update(const int n, double* a, const int p, const int q, const double c, co
 	for (int k=0; k<n; k++)
 	{
 		tmp = a[k + p*n];
-		a[k + p*n] =  c*tmp + s*a[k + q*n];
-		a[k + q*n] = -s*tmp + c*a[k + q*n];
+		a[k + p*n] =  c*tmp - s*a[k + q*n];
+		a[k + q*n] =  s*tmp + c*a[k + q*n];
 	}
 }
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 				if (t > EPS)
 				{
 					// compute Givens rotation
-					double zeta = (x - y) / (2.0*z);
+					double zeta = (y - x) / (2.0*z);
 					double tau;
 					if (zeta >= 0.0)
 						tau =  1.0 / ( zeta + sqrt(1.0 + zeta*zeta));
