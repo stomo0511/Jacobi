@@ -80,7 +80,8 @@ int main(int argc, char **argv)
 				double z = cblas_ddot(n,a+p*n,1,a+q*n,1);  // z = a_p^T a_q
 
 				double t = fabs(z) / sqrt(x*y);
-				maxt = maxt > t ? maxt : t;      // *** <- この部分大丈夫化か？ ***
+				#pragma omp atmic
+				maxt = maxt > t ? maxt : t;
 
 				if (t > EPS)
 				{
