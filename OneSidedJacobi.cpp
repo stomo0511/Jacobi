@@ -33,7 +33,7 @@ void Update(const int n, double* a, const int p, const int q, const double c, co
 
 int main(int argc, char **argv)
 {
-	assert(argc > 1);
+	assert(argc > 1);  // Usage: a.out [size of matrix]
 
 	constexpr double e = std::numeric_limits<double>::epsilon();  // Machine epsilon
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	assert( n % 2 == 0);
 
 	double *a = new double[n*n];   // Original matrix
-	double *oa = new double[n*n];  // Copy of original matrix
+	double *b = new double[n*n];  // Copy of original matrix
 	double *v = new double[n*n];   // Right-singular vector matrix
 	int *top = new int[n/2];
 	int *bot = new int[n/2];
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 	#pragma omp parallel
 	{
-		Copy_mat(n,a,oa);   // oa <- a
+		Copy_mat(n,a,b);   // b <- a
 		Set_Iden(n,v);      // v <- I
 
 		#pragma omp for
@@ -133,17 +133,17 @@ int main(int argc, char **argv)
 //			cblas_dscal(n,1.0/s[i],u+i*n,1);
 //	}
 
-	cblas_dgemm(CblasColMajor,CblasNoTrans,CblasTrans,n,n,n,-1.0,a,n,v,n,1.0,oa,n);
+	cblas_dgemm(CblasColMajor,CblasNoTrans,CblasTrans,n,n,n,-1.0,a,n,v,n,1.0,b,n);
 	double tmp = 0.0;
 	#pragma omp parallel for reduction(+:tmp)
 	for (int i=0; i<n*n; i++)
-		tmp += oa[i]*oa[i];
+		tmp += b[i]*b[i];
 
 	cout << "n = " << n << ", time = " << time << endl;
 	cout << "k = " << k << ", ||A - U Sigma V^T|| = " << sqrt(tmp) << endl;
 
 	delete [] a;
-	delete [] oa;
+	delete [] b;
 	delete [] v;
 	delete [] top;
 	delete [] bot;
