@@ -37,26 +37,24 @@ int main(int argc, char **argv)
 
 	constexpr double e = std::numeric_limits<double>::epsilon();  // Machine epsilon
 
-	// Matrix size: n x n
-	const int n = atoi(argv[1]);
+	const int n = atoi(argv[1]);     // Matrix size: n x n
 	assert( n % 2 == 0);
 
 	double *a = new double[n*n];   // Original matrix
-	double *b = new double[n*n];  // Copy of original matrix
+	double *b = new double[n*n];   // Copy of original matrix
 	double *v = new double[n*n];   // Right-singular vector matrix
 	int *top = new int[n/2];
 	int *bot = new int[n/2];
 
-	// Generate random number (-1,1) matrix
-	Gen_mat(n,a);
+	Gen_mat(n,a); // Generate random number (-1,1) matrix
 
 	#pragma omp parallel
 	{
 		Copy_mat(n,a,b);   // b <- a
-		Set_Iden(n,v);      // v <- I
+		Set_Iden(n,v);     // v <- I
 
 		#pragma omp for
-		for (int i=0;i<n/2;i++)
+		for (int i=0;i<n/2;i++)      // Index pair
 		{
 			top[i] = i*2;
 			bot[i] = i*2+1;
@@ -64,9 +62,10 @@ int main(int argc, char **argv)
 	}
 
 	const double tol = sqrt(n)*e;  // Convergence criteria
-	double maxt = 1.0;             // maximum abs. value of non-diagonal elements
-	int k = 0;                      // no. of iterations
-	double time = omp_get_wtime();
+	double maxt = 1.0;             // Maximum abs. value of non-diagonal elements
+	int k = 0;                      // No. of iterations
+
+	double time = omp_get_wtime(); // Timer start
 
 	while (maxt > tol)
 	{
@@ -97,19 +96,16 @@ int main(int argc, char **argv)
 					else
 						tau = -1.0 / (-zeta + sqrt(1.0 + zeta*zeta));
 
-					double c = 1.0 / sqrt(1 + tau*tau);
-					double s = c*tau;
+					double c = 1.0 / sqrt(1 + tau*tau); // cos
+					double s = c*tau;                   // sin
 
-					// update A
-					Update(n,a,p,q,c,s);
-
-					// update V
-					Update(n,v,p,q,c,s);
+					Update(n,a,p,q,c,s);  // update A
+					Update(n,v,p,q,c,s);  // update V
 				}
-				k++;
-			} // End of l-loop
-			music(n,top,bot);
-		} // End of p-loop
+			} // End of i-loop
+			music(n,top,bot);  // Rotate index pair
+		} // End of j-loop
+		k++;
 	} // End of while-loop
 
 	time = omp_get_wtime() - time;
