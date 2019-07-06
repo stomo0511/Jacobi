@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		maxt = 0.0;
 		for (int j=0; j<n-1; j++)
 		{
-			#pragma omp parallel for reduction(+:k)
+//			#pragma omp parallel for reduction(+:k)
 			for (int i=0; i<n/2; i++)
 			{
 				int p = (top[i] > bot[i]) ? top[i] : bot[i];

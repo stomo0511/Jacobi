@@ -9,7 +9,7 @@
 using namespace std;
 
 //
-// Clasiccal Jacobi method
+// Classical Jacobi method
 //
 int main(int argc, char **argv)
 {
@@ -38,19 +38,15 @@ int main(int argc, char **argv)
 
 	while (Off_d(n,a) > EPS)
 	{
-//		cout << "k = " << k << ", Off(A) = " << Off_d(n,a) << endl;
-
 		// Search the maximum element
 		Search_max(n,a,&p,&q);
-//		cout << "p = " << p << ", q = " << q << endl;
 
 		// Generate Givens rotation (c,s)
 		Sym_schur2(n,a,p,q,&c,&s);
 
 		// Apply Givens rotation from Left and Right
-		Givens(n,a,p,q,c,s);
-//		GivensL(n,a,p,q,c,s);
-//		GivensR(n,a,p,q,c,s);
+		GivensL(n,a,p,q,c,s);
+		GivensR(n,a,p,q,c,s);
 
 		// Apply Givens rotation from Right
 		GivensR(n,v,p,q,c,s);
