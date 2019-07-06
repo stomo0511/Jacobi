@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
 	// Matrix size: n x n
 	const int n = atoi(argv[1]);
-	assert(n%2==0);
+	assert( n % 2 == 0);
 
 	double *a = new double[n*n];   // Original matrix
 	double *oa = new double[n*n];  // Copy of original matrix
@@ -39,13 +39,13 @@ int main(int argc, char **argv)
 	int *top = new int[n/2];
 	int *bot = new int[n/2];
 
-	// Generate matrix
+	// Generate random number (-1,1) matrix
 	Gen_mat(n,a);
 
 	#pragma omp parallel
 	{
-		Copy_mat(n,a,oa);
-		Set_Iden(n,v);
+		Copy_mat(n,a,oa);   // oa <- a
+		Set_Iden(n,v);      // v <- I
 
 		#pragma omp for
 		for (int i=0;i<n/2;i++)
@@ -55,10 +55,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	int k = 0;
+	int k = 0;   // no. of iterations
 	double time = omp_get_wtime();
 
-	double maxt = 1.0;  // convergence criterion
+	double maxt = 1.0;  // maximum abs. value of non-diagonal elements
 	while (maxt > EPS)
 	{
 		maxt = 0.0;
