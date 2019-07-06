@@ -1,48 +1,48 @@
+//
+// Clasiccal Jacobi method
+//
+
 #include <omp.h>
 #include <iostream>
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-
+#include <mkl_cblas.h>
 #include "Jacobi.hpp"
 
 using namespace std;
 
-//
-// Classical Jacobi method
-//
 int main(int argc, char **argv)
 {
-	assert(argc > 1);
+	assert(argc > 1);  // Usage: a.out [size of matrix]
 
-	// Matrix size
-	const int n = atoi(argv[1]);
+	const int n = atoi(argv[1]);	    // Matrix size: n x n
+	assert( n % 2 == 0);
 
-	double *a = new double[n*n];
-	double *v = new double[n*n];
+	double *a = new double[n*n];   // Original matrix
+	double *b = new double[n*n];   // Copy of original matrix
+	double *v = new double[n*n];   // Right-singular vector matrix
 
-	// Generate matrix
-	Gen_symmat(n,a);
 
-	double *oa = new double[n*n];
-	Copy_symmat(n,a,oa);
+	Gen_symmat(n,a); // Generate symmetric random matrix
 
-	// Eigenvector matrix
-	Set_Iden(n,v);
+	#pragma omp parallel
+	{
+		Copy_symmat(n,a,b);  // b <- a
+		Set_Iden(n,v);       // v <- I
+	}
 
-	double c, s;
-	int p, q;
-	int k = 0;
+	int k = 0;                       // No. of iterations
+	double c, s;                    // Cos and Sin
+	int p, q;                        // Index
 
-	double time = omp_get_wtime();
+	double time = omp_get_wtime();  // Timer start
 
 	while (Off_d(n,a) > EPS)
 	{
-		// Search the maximum element
-		Search_max(n,a,&p,&q);
+		Search_max(n,a,&p,&q);     // Search the maximum element
 
-		// Generate Givens rotation (c,s)
-		Sym_schur2(n,a,p,q,&c,&s);
+		Sym_schur2(n,a,p,q,&c,&s); // Generate Givens rotation (c,s)
 
 		// Apply Givens rotation from Left and Right
 		GivensL(n,a,p,q,c,s);
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 //	cout << "\nA = \n";
 //	for (int i=0; i<n; i++) {
 //		for (int j=0; j<n; j++)
-//			cout << oa[i + j*n] << ", ";
+//			cout << b[i + j*n] << ", ";
 //		cout << endl;
 //	}
 //	cout << "\nΛ = \n";
@@ -77,11 +77,11 @@ int main(int argc, char **argv)
 //			cout << v[i + j*n] << ", ";
 //		cout << endl;
 //	}
-	cout << "|| V^T A V - Λ|| = " << Residure(n,oa,a,v) << endl;
+	cout << "|| V^T A V - Λ|| = " << Residure(n,b,a,v) << endl;
 
 	delete [] a;
 	delete [] v;
-	delete [] oa;
+	delete [] b;
 
 	return 0;
 }

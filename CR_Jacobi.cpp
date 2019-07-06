@@ -1,16 +1,17 @@
+//
+// Cyclic-by-Row Jabobi
+//
+
 #include <omp.h>
 #include <iostream>
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-
 #include "Jacobi.hpp"
 
 using namespace std;
 
-//
-// Cyclic-by-Row Jabobi
-//
+
 int main(int argc, char **argv)
 {
 	assert(argc > 1);
