@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 		k++;
 	} // End of while-loop
 
-	time = omp_get_wtime() - time;
+	time = omp_get_wtime() - time;  // Timer stop
 
 //	// sigma_i = || G(:,i) ||_2
 //	double *s = new double[n];
