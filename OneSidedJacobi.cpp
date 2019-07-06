@@ -15,14 +15,19 @@ using namespace std;
 // update two vectors
 void Update(const int n, double* a, const int p, const int q, const double c, const double s)
 {
-	double tmp;
+//	double tmp;
+//
+//	for (int k=0; k<n; k++)
+//	{
+//		tmp = a[k + p*n];
+//		a[k + p*n] =  c*tmp - s*a[k + q*n];
+//		a[k + q*n] =  s*tmp + c*a[k + q*n];
+//	}
 
-	for (int k=0; k<n; k++)
-	{
-		tmp = a[k + p*n];
-		a[k + p*n] =  c*tmp - s*a[k + q*n];
-		a[k + q*n] =  s*tmp + c*a[k + q*n];
-	}
+	cblas_daxpy(n,-s/c,a+q*n,1,a+p*n,1);  // a'_p = a_p - (s/c)*a_q
+	cblas_daxpy(n, c*s,a+p*n,1,a+q*n,1);  // a'_q = (c*s)*a'_p + a_q
+	cblas_dscal(n,c,a+p*n,1);             // a_p = (c)*a'_p
+	cblas_dscal(n,1.0/c,a+q*n,1);         // a_q = (1/c)*a'_q
 }
 
 int main(int argc, char **argv)
