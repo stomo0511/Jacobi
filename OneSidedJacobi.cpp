@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <mkl_cblas.h>
 #include "Jacobi.hpp"
 
@@ -34,6 +35,8 @@ int main(int argc, char **argv)
 {
 	assert(argc > 1);
 
+	constexpr double e = std::numeric_limits<double>::epsilon();  // Machine epsilon
+
 	// Matrix size: n x n
 	const int n = atoi(argv[1]);
 	assert( n % 2 == 0);
@@ -60,11 +63,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-	int k = 0;   // no. of iterations
+	const double tol = sqrt(n)*e;  // Convergence criteria
+	double maxt = 1.0;             // maximum abs. value of non-diagonal elements
+	int k = 0;                      // no. of iterations
 	double time = omp_get_wtime();
 
-	double maxt = 1.0;  // maximum abs. value of non-diagonal elements
-	while (maxt > EPS)
+	while (maxt > tol)
 	{
 		maxt = 0.0;
 		for (int j=0; j<n-1; j++)
@@ -83,7 +87,7 @@ int main(int argc, char **argv)
 				#pragma omp atmic
 				maxt = maxt > t ? maxt : t;
 
-				if (t > EPS)
+				if (t > tol)
 				{
 					// compute Givens rotation
 					double zeta = (y - x) / (2.0*z);
