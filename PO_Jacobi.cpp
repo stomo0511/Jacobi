@@ -1,107 +1,90 @@
+//
+// Parallel Order Jabobi
+//
+
 #include <omp.h>
 #include <iostream>
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-
+#include <limits>
 #include "Jacobi.hpp"
 
 using namespace std;
 
-//
-// Parallel Order Jabobi
-//
 int main(int argc, char **argv)
 {
-	assert(argc > 1);
+	assert(argc > 1);  // Usage: a.out [size of matrix]
 
-	// Matrix size
-//	int n = 4;
-	const int n = atoi(argv[1]);
-	assert(n%2==0);
+	constexpr double e = std::numeric_limits<double>::epsilon();  // Machine epsilon
 
-//	cout << "n = " << n << endl;
+	const int n = atoi(argv[1]);	    // Matrix size: n x n
+	assert( n % 2 == 0);
 
-	double *a = new double[n*n];
-	double *v = new double[n*n];
-
-	// Generate matrix
-	Gen_symmat(n,a);
-
-	double *oa = new double[n*n];
-	Copy_symmat(n,a,oa);
-
-	// Eigenvector matrix
-	Set_Iden(n,v);
-
-//	cout << "A = \n";
-//	for (int i=0; i<n; i++) {
-//		for (int j=0; j<n; j++)
-//			cout << a[i + j*n] << ", ";
-//		cout << endl;
-//	}
-//	cout << "Off(A) = " << ofd << endl;
-//	cout << "V = \n";
-//	for (int i=0; i<n; i++) {
-//		for (int j=0; j<n; j++)
-//			cout << v[i + j*n] << ", ";
-//		cout << endl;
-//	}
-
+	double *a = new double[n*n];   // Original matrix
+	double *b = new double[n*n];   // Copy of original matrix
+	double *v = new double[n*n];   // Right-singular vector matrix
 	int *top = new int[n/2];
 	int *bot = new int[n/2];
 
-	for (int i=0;i<n/2;i++)
+	Gen_symmat(n,a); // Generate symmetric random matrix
+
+	#pragma omp parallel
 	{
-		top[i] = i*2;
-		bot[i] = i*2+1;
+		Copy_symmat(n,a,b);  // b <- a
+		Set_Iden(n,v);       // v <- I
+
+		#pragma omp for
+		for (int i=0;i<n/2;i++)      // Index pair
+		{
+			top[i] = i*2;
+			bot[i] = i*2+1;
+		}
 	}
 
-	double c, s;
-	int p, q;
-	int k = 0;
+	const double tol = n*sqrt(n)*e; // Convergence criteria
+	int k = 0;                       // No. of iterations
 
-	double time = omp_get_wtime();
+	double time = omp_get_wtime();  // Timer start
 
-	while (Off_d(n,a) > EPS)
+	while (Off_d(n,a) > tol)
 	{
-//		cout << "\nk = " << k << ", Off(A) = " << ofd << endl;
-
-		for (int t=0; t<n-1; t++)
+		for (int j=0; j<n-1; j++)
 		{
-			for (int l=0; l<n/2; l++)
+			for (int i=0; i<n/2; i++)
 			{
-				p = (top[l] < bot[l]) ? top[l] : bot[l];
-				q = (top[l] > bot[l]) ? top[l] : bot[l];
-//				cout << "p = " << p << ", q = " << q << endl;
+				double c, s;  // Cos and Sin
+
+				int p = (top[i] < bot[i]) ? top[i] : bot[i];
+				int q = (top[i] > bot[i]) ? top[i] : bot[i];
 
 				// Generate Givens rotation (c,s)
 				Sym_schur2(n,a,p,q,&c,&s);
-//				cout << "c = " << c << ", s = " << s << endl;
 
-				// Apply Givens rotation
-				Givens(n,a,p,q,c,s);
+				// Apply Givens rotation from Left and Right
+				GivensL(n,a,p,q,c,s);
+				GivensR(n,a,p,q,c,s);
 
 				// Apply Givens rotation from Right
 				GivensR(n,v,p,q,c,s);
 
 				k++;
-			}
+			} // End of i-loop
 			music(n,top,bot);
-		}
-	}
+		} // End of j-loop
+	} // End of while-loop
 
-	time = omp_get_wtime() - time;
+	time = omp_get_wtime() - time;  // Timer stop
 
 	cout << "n = " << n << ", time = " << time << endl;
 	cout << "k = " << k << ", Off(A) = " << Off_d(n,a) << endl;
-	cout << "|| V^T A V - Λ|| = " << Residure(n,oa,a,v) << endl;
+	cout << "|| V^T A V - Λ|| = " << Residure(n,b,a,v) << endl;
 
 	delete [] a;
+	delete [] b;
 	delete [] v;
-	delete [] oa;
 	delete [] top;
 	delete [] bot;
 
-	return 0;
+	return EXIT_SUCCESS;
 }
