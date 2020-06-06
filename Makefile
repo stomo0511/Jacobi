@@ -1,13 +1,25 @@
-PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+UNAME = $(shell uname)
+ifeq ($(UNAME),Linux)
+	CXX = g++-9
+	LIB_DIR = /opt/intel/compilers_and_libraries/linux/lib/intel64
+	LIBS = -pthread -lm -ldl
+	MKL_ROOT = /opt/intel/compilers_and_libraries/linux/mkl
+	MKL_LIB_DIR = $(MKL_ROOT)/lib/intel64
+endif
+ifeq ($(UNAME),Darwin)
+	CXX = /usr/local/bin/g++-9
+	LIB_DIR = /opt/intel/compilers_and_libraries/mac/lib
+	MKL_ROOT = /opt/intel/compilers_and_libraries/mac/mkl
+	MKL_LIB_DIR = $(MKL_ROOT)/lib
+endif
 
-CXX = /usr/local/bin/g++-9
-CPPFLAGS = -fopenmp -O2
-LDFLAGS = -lgomp
+CXXFLAGS = -m64 -fopenmp -O3
 
-MKL_ROOT =  /opt/intel/compilers_and_libraries/mac/mkl
 MKL_INC_DIR = $(MKL_ROOT)/include
-MKL_LIB_DIR = $(MKL_ROOT)/lib
-MKL_LIBS = -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
+LIBS = -lgomp -lm
+# LIBS = -liomp5
+MKL_LIBS = -lmkl_intel_lp64 -lmkl_sequential -lmkl_core 
+# MKL_LIBS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core 
 
 OSOBJS = Jacobi.o OneSidedJacobi.o
 COBJS = Jacobi.o ClassicalJacobi.o
@@ -15,33 +27,25 @@ ROBJS = Jacobi.o CR_Jacobi.o
 POBJS = Jacobi.o PO_Jacobi.o
 OMPOBJS = Jacobi.o OmpPO_Jacobi.o
 
-ifeq ($(BUILD_MODE),debug)
-	CFLAGS += -g
-else ifeq ($(BUILD_MODE),run)
-	CFLAGS += -O2
-else
-	$(error Build mode $(BUILD_MODE) not supported by this Makefile)
-endif
-
 all:	CJacobi CRJacobi POJacobi OMPOJacobi OSJacobi
 
 OSJacobi: $(OSOBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS) -L$(MKL_LIB_DIR) $(MKL_LIBS)
+	$(CXX) $(CXXFLAGS) -o OSJacobi $(OSOBJS) -L$(LIB_DIR) -L$(MKL_LIB_DIR) $(MKL_LIBS) $(LIBS)
 
 OMPOJacobi: $(OMPOBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o OMPOJacobi $(OMPOBJS) -L$(LIB_DIR) -L$(MKL_LIB_DIR) $(MKL_LIBS) $(LIBS)
 
 POJacobi: $(POBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o POJacobi $(POBJS) -L$(LIB_DIR) -L$(MKL_LIB_DIR) $(MKL_LIBS) $(LIBS)
 
 CRJacobi: $(ROBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o CRJacobi $(ROBJS) -L$(LIB_DIR) -L$(MKL_LIB_DIR) $(MKL_LIBS) $(LIBS)
 
 CJacobi: $(COBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o CJacobi $(COBJS) -L$(LIB_DIR) -L$(MKL_LIB_DIR) $(MKL_LIBS) $(LIBS)
 
-%.o:	$(PROJECT_ROOT)%.cpp
-	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -I$(MKL_INC_DIR) -o $@ $<
+%.o: %.cpp
+	$(CXX) -c $(CXXFLAGS) -I$(MKL_INC_DIR) -o $@ $<
 
 clean:
 	rm -fr OSJacobi CJacobi CRJacobi POJacobi OMPOJacobi $(COBJS) $(ROBJS) $(POBJS) $(OMPOBJS) $(OSOBJS)

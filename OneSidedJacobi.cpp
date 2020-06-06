@@ -16,15 +16,6 @@ using namespace std;
 // update two vectors
 void Update(const int n, double* a, const int p, const int q, const double c, const double s)
 {
-//	double tmp;
-//
-//	for (int k=0; k<n; k++)
-//	{
-//		tmp = a[k + p*n];
-//		a[k + p*n] =  c*tmp - s*a[k + q*n];
-//		a[k + q*n] =  s*tmp + c*a[k + q*n];
-//	}
-
 	cblas_daxpy(n,-s/c,a+q*n,1,a+p*n,1);  // a'_p = a_p - (s/c)*a_q
 	cblas_daxpy(n, c*s,a+p*n,1,a+q*n,1);  // a'_q = (c*s)*a'_p + a_q
 	cblas_dscal(n,c,a+p*n,1);             // a_p = (c)*a'_p
@@ -109,25 +100,6 @@ int main(int argc, char **argv)
 	} // End of while-loop
 
 	time = omp_get_wtime() - time;  // Timer stop
-
-//	// sigma_i = || G(:,i) ||_2
-//	double *s = new double[n];
-//
-//	#pragma omp parallel for
-//	for (int i=0; i<n; i++)
-//		s[i] = sqrt(cblas_ddot(n,a+i*n,1,a+i*n,1));
-//
-//	// Left-singular vector matrix
-//	double *u = new double[n*n];
-//
-//	#pragma omp parallel
-//	{
-//		Copy_mat(n,a,u);
-//
-//		#pragma omp for
-//		for (int i=0; i<n; i++)
-//			cblas_dscal(n,1.0/s[i],u+i*n,1);
-//	}
 
 	cblas_dgemm(CblasColMajor,CblasNoTrans,CblasTrans,n,n,n,-1.0,a,n,v,n,1.0,b,n);
 	double tmp = 0.0;
